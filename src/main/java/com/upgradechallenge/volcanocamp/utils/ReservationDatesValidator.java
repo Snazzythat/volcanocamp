@@ -54,7 +54,7 @@ public class ReservationDatesValidator implements ConstraintValidator<ValidReser
 
 		// Check if both dates are in the future
 		LocalDate today = LocalDate.now();
-		if (today.isAfter(requestCheckinDate) || (today.isAfter(requestCheckinDate))) {
+		if (today.isAfter(requestCheckinDate) || (today.isAfter(requestCheckoutDate))) {
 			this.setConstraintViolationInContext(VALIDATION_ERROR_DATES_FUTURE, constraintContext);
 			return false;
 		}

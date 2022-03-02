@@ -2,24 +2,24 @@ package com.upgradechallenge.volcanocamp.service;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.transaction.Transactional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.upgradechallenge.volcanocamp.exception.BadRequestException;
 import com.upgradechallenge.volcanocamp.exception.MethodNotAllowedException;
 import com.upgradechallenge.volcanocamp.exception.OccupiedPeriodException;
 import com.upgradechallenge.volcanocamp.exception.ResourceNotFoundException;
 import com.upgradechallenge.volcanocamp.model.Reservation;
+import com.upgradechallenge.volcanocamp.model.ReservationDate;
+import com.upgradechallenge.volcanocamp.repository.ReservationDateRepository;
 import com.upgradechallenge.volcanocamp.repository.ReservationRepository;
 
 @Service
@@ -32,62 +32,55 @@ public class ReservationService {
 	@Autowired
 	ReservationRepository reservationRepo;
 
+	@Autowired
+	ReservationDateRepository reservationDateRepo;
+
 	/**
 	 * 
 	 * @param fromDate
 	 * @param toDate
 	 * @return
 	 */
-	public List<LocalDate> getAllAvailableDates(LocalDate startDate, LocalDate endDate) {
-
-		List<LocalDate> availableDates = new ArrayList<>();
-		List<LocalDate> occupiedDates = new ArrayList<>();
+	@Transactional(readOnly = true)
+	public synchronized List<LocalDate> getAllAvailableDates(LocalDate startDate, LocalDate endDate) {
 
 		if (startDate.isAfter(endDate)) {
 			throw new BadRequestException(VALIDATION_ERROR_DATE_QUERY_PARAMS);
 		}
 
-		List<Reservation> activeReservationsInPeriod = reservationRepo.findActiveReservationsInInterval(startDate,
-				endDate);
+		// Add offset to endDate to include it in availability list
+		List<LocalDate> potentialAvailableDates = extractDatesBetweenTwoDates(startDate, endDate.plusDays(1));
+		List<ReservationDate> activeReservationDatesInPeriod = reservationDateRepo
+				.findActiveReservationsInInterval(startDate, endDate);
 
-		if (activeReservationsInPeriod.isEmpty()) {
-			availableDates = extractDatesBetweenTwoDates(startDate, endDate);
+		if (activeReservationDatesInPeriod.size() == 0) {
+			return potentialAvailableDates;
 		} else {
-			// Get all occupied dates
-			for (Reservation res : activeReservationsInPeriod) {
-				List<LocalDate> occupiedDatesForRes = extractDatesBetweenTwoDates(res.getCheckinDate(),
-						res.getCheckoutDate());
-				occupiedDates = Stream.of(occupiedDates, occupiedDatesForRes).flatMap(Collection::stream)
-						.collect(Collectors.toList());
-			}
-			// Go through each date candidate and verify if the date is not in between
-			// reservation periods
-			for (LocalDate date = startDate; date.isBefore(endDate); date = date.plusDays(1)) {
-				if (!occupiedDates.contains(date)) {
-					availableDates.add(date);
-				}
-			}
+			List<LocalDate> occupiedDates = activeReservationDatesInPeriod.stream().map(res -> res.getDate())
+					.collect(Collectors.toList());
+			potentialAvailableDates.removeAll(occupiedDates);
 		}
-		
-		return availableDates;
+
+		return potentialAvailableDates;
 	}
-	
+
 	/**
 	 * 
 	 * @param reservationId
 	 * @return
 	 */
+	@Transactional(readOnly = true)
 	public Reservation getReservationById(String reservationId) {
-		
+
 		validateUUID(reservationId);
 		UUID resUUID = UUID.fromString(reservationId);
-		
+
 		Optional<Reservation> resOptional = this.reservationRepo.findById(resUUID);
 
 		if (resOptional.isEmpty()) {
 			throw new ResourceNotFoundException(reservationId);
 		}
-		
+
 		return resOptional.get();
 	}
 
@@ -96,29 +89,34 @@ public class ReservationService {
 	 * @param reservationToSave
 	 * @return
 	 */
-	@Transactional
-	public synchronized Reservation createNewReservation(Reservation reservationToSave) {
+	@Transactional(isolation = Isolation.SERIALIZABLE)
+	public Reservation createNewReservation(Reservation reservationToSave) {
 		// Check if the provided reservation overlaps with any existing reservations
-		int datesToBookLength = extractDatesBetweenTwoDates(reservationToSave.getCheckinDate(),
-				reservationToSave.getCheckoutDate()).size();
-		int datesAvailableWithinBookingPeriod = getAllAvailableDates(reservationToSave.getCheckinDate(),
-				reservationToSave.getCheckoutDate()).size();
+		List<ReservationDate> activeReservationDatesInPeriod = reservationDateRepo.findActiveReservationsInInterval(
+				reservationToSave.getCheckinDate(), reservationToSave.getCheckoutDate());
 
-		if (datesToBookLength != datesAvailableWithinBookingPeriod) {
+		// no overlaps, safe to save
+		if (activeReservationDatesInPeriod.isEmpty()) {
+			reservationToSave.setActive(true);
+			List<ReservationDate> datesToReserve = convertLocalDateListToReservationList(extractDatesBetweenTwoDates(
+					reservationToSave.getCheckinDate(), reservationToSave.getCheckoutDate()));
+
+			// persist dates of the new valid reservation
+		    reservationDateRepo.saveAll(datesToReserve);
+		    
+		} else {
 			throw new OccupiedPeriodException();
 		}
-		reservationToSave.setActive(true);
-		
 		return reservationRepo.save(reservationToSave);
 	}
-	
+
 	/**
 	 * 
 	 * @param reservationToUpdate
 	 * @return
 	 */
-	@Transactional
-	public synchronized Reservation updateReservation(String reservationId, Reservation reservationToUpdate) {
+	@Transactional(isolation = Isolation.SERIALIZABLE)
+	public Reservation updateReservation(String reservationId, Reservation reservationToUpdate) {
 
 		validateUUID(reservationId);
 		UUID resUUID = UUID.fromString(reservationId);
@@ -129,30 +127,43 @@ public class ReservationService {
 		}
 
 		Reservation savedReservation = resOptional.get();
-		
+
 		// Fast fail if reservation is cancelled
-		if(!savedReservation.isActive()) {
+		if (!savedReservation.isActive()) {
 			throw new MethodNotAllowedException(VALIDATION_ERROR_ACTIVE_STATUS);
 		}
-		// Fetch all reservation provided in the updated period in case period changed
-		// and check if any exist, minus own reservation
-		if (reservationToUpdate.getCheckinDate() != savedReservation.getCheckinDate()
-				|| reservationToUpdate.getCheckoutDate() != savedReservation.getCheckoutDate()) {
-			List<Reservation> activeReservationsInPeriod = reservationRepo
-					.findActiveReservationsInInterval(reservationToUpdate.getCheckinDate(),
-							reservationToUpdate.getCheckoutDate())
-					.stream().filter(r -> r.getId() != resUUID).collect(Collectors.toList());
 
-			if(activeReservationsInPeriod.size() > 0) {
-				throw new OccupiedPeriodException();
-			}		
-			savedReservation.setCheckinDate(reservationToUpdate.getCheckinDate());
-			savedReservation.setCheckoutDate(reservationToUpdate.getCheckoutDate());
+		// Check if the new dates of the reservation do not overlap, take into account
+		// existing dates if update
+		// will include old dates as well
+		List<ReservationDate> activeReservationDatesInPeriod = reservationDateRepo.findActiveReservationsInInterval(
+				reservationToUpdate.getCheckinDate(), reservationToUpdate.getCheckoutDate());
+		List<ReservationDate> oldReservationDates = convertLocalDateListToReservationList(
+				extractDatesBetweenTwoDates(savedReservation.getCheckinDate(), savedReservation.getCheckoutDate()));
+		activeReservationDatesInPeriod.removeAll(oldReservationDates);
+
+		// no overlaps, safe to update
+		if (activeReservationDatesInPeriod.isEmpty()) {
+
+			// Remove current reservation dates from ReservationDate table
+			reservationDateRepo.deleteAll(oldReservationDates);
+
+			// Save new dates to ReservationDate table
+			List<ReservationDate> newReservationDates = convertLocalDateListToReservationList(
+					extractDatesBetweenTwoDates(reservationToUpdate.getCheckinDate(),
+							reservationToUpdate.getCheckoutDate()));
+			
+		    reservationDateRepo.saveAll(newReservationDates);
+
+		} else {
+			throw new OccupiedPeriodException();
 		}
-		
+
+		savedReservation.setCheckinDate(reservationToUpdate.getCheckinDate());
+		savedReservation.setCheckoutDate(reservationToUpdate.getCheckoutDate());
 		savedReservation.setUserFullName(reservationToUpdate.getUserFullName());
 		savedReservation.setUserEmail(reservationToUpdate.getUserEmail());
-		
+
 		return reservationRepo.save(savedReservation);
 	}
 
@@ -161,11 +172,12 @@ public class ReservationService {
 	 * @param reservationId
 	 * @return
 	 */
+	@Transactional
 	public Reservation cancelReservation(String reservationId) {
-		
+
 		validateUUID(reservationId);
 		UUID resUUID = UUID.fromString(reservationId);
-		
+
 		Optional<Reservation> resOptional = this.reservationRepo.findById(resUUID);
 
 		if (resOptional.isEmpty()) {
@@ -176,6 +188,11 @@ public class ReservationService {
 		savedReservation.setActive(false);
 		savedReservation.setCancelledDate(LocalDate.now());
 
+		// Remove active dates
+		List<ReservationDate> reservationDatesToRemove = convertLocalDateListToReservationList(
+				extractDatesBetweenTwoDates(savedReservation.getCheckinDate(), savedReservation.getCheckoutDate()));
+		reservationDateRepo.deleteAll(reservationDatesToRemove);
+
 		return reservationRepo.save(savedReservation);
 	}
 
@@ -183,12 +200,17 @@ public class ReservationService {
 		return Stream.iterate(startDate, date -> date.plusDays(1)).limit(ChronoUnit.DAYS.between(startDate, endDate))
 				.collect(Collectors.toList());
 	}
-	
+
 	private void validateUUID(String uuid) {
 		try {
 			UUID.fromString(uuid);
-		}catch(Exception e) {
+		} catch (Exception e) {
 			throw new BadRequestException(VALIDATION_ERROR_ID);
 		}
+	}
+
+	private List<ReservationDate> convertLocalDateListToReservationList(List<LocalDate> localDates) {
+		return localDates.stream().map(localDate -> ReservationDate.builder().date(localDate).build())
+				.collect(Collectors.toList());
 	}
 }

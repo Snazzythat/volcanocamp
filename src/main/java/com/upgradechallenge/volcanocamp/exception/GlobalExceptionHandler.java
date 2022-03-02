@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.convert.ConversionFailedException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -30,7 +30,13 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(OccupiedPeriodException.class)
 	protected ResponseEntity<OperationError> handleOccupiedPeriodException(OccupiedPeriodException ex) {
 		OperationError error = new OperationError(HttpStatus.BAD_REQUEST, "Occupied period error", ex.getMessage());
-		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+	}
+	
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	protected ResponseEntity<OperationError> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+		OperationError error = new OperationError(HttpStatus.BAD_REQUEST, "Occupied period error", ex.getMessage());
+		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
 	}
 
 	@ExceptionHandler(ResourceNotFoundException.class)
@@ -59,13 +65,6 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
 	protected ResponseEntity<OperationError> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
 		OperationError error = new OperationError(HttpStatus.BAD_REQUEST, "Query parameter format error", ex.getMessage());
-		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-	}
-
-	@ExceptionHandler(ConversionFailedException.class)
-	protected ResponseEntity<OperationError> handleConversionFailedException(ConversionFailedException ex) {
-		OperationError error = new OperationError(HttpStatus.BAD_REQUEST, "Bad query parameter format error",
-				ex.getMessage());
 		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 	}
 

@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Version;
 
 import org.hibernate.annotations.GenericGenerator;
 
@@ -34,6 +35,10 @@ public class Reservation implements Serializable {
 	@GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
 	@Column(name = "id", updatable = false, nullable = false)
 	private UUID id;
+	
+	@Version
+	@Column(name = "version", nullable = false)
+	private Long version;
 
 	@Column(name = "user_name")
 	private String userFullName;

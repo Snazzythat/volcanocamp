@@ -1,14 +1,18 @@
 package com.upgradechallenge.volcanocamp.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,6 +25,8 @@ import com.upgradechallenge.volcanocamp.exception.MethodNotAllowedException;
 import com.upgradechallenge.volcanocamp.exception.OccupiedPeriodException;
 import com.upgradechallenge.volcanocamp.exception.ResourceNotFoundException;
 import com.upgradechallenge.volcanocamp.model.Reservation;
+import com.upgradechallenge.volcanocamp.model.ReservationDate;
+import com.upgradechallenge.volcanocamp.repository.ReservationDateRepository;
 import com.upgradechallenge.volcanocamp.repository.ReservationRepository;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -31,34 +37,37 @@ public class ReservationServiceTest {
 	@Mock
 	ReservationRepository reservationRepoMock;
 
+	@Mock
+	ReservationDateRepository reservationDateRepoMock;
+
 	@InjectMocks
 	ReservationService reservationService = new ReservationService();
 
 	@Test
 	public void givenTwoValidDatesAndNoReservations_getAllAvailableDates_shouldReturnAvailableDatesBetweenProvidedDates() {
 		LocalDate startDate = LocalDate.now().plusDays(1);
-		LocalDate endDate = LocalDate.now().plusDays(10);
+		LocalDate endDate = LocalDate.now().plusDays(3);
 
-		when(reservationRepoMock.findActiveReservationsInInterval(startDate, endDate)).thenReturn(new ArrayList<>());
+		when(reservationDateRepoMock.findActiveReservationsInInterval(startDate, endDate))
+				.thenReturn(new ArrayList<>());
 
 		List<LocalDate> availableDates = reservationService.getAllAvailableDates(startDate, endDate);
 
-		assertTrue(availableDates.size() == 9);
+		assertTrue(availableDates.size() == 3);
 	}
 
 	@Test
-	public void givenValidReservation_getAllAvailableDates_shouldReturnNoAvailableDatesForReservationPeriod() {
+	public void givenValidReservation_getAllAvailableDates_shouldReturnOnlyOneAvailableDate() {
 		LocalDate startDate = LocalDate.now().plusDays(1);
-		LocalDate endDate = LocalDate.now().plusDays(10);
+		LocalDate endDate = LocalDate.now().plusDays(3);
 
-		List<Reservation> mockResList = Arrays
-				.asList(Reservation.builder().checkinDate(startDate).checkoutDate(endDate).build());
+		List<ReservationDate> mockResDates = getReservationDateListFromRange(startDate, endDate);
 
-		when(reservationRepoMock.findActiveReservationsInInterval(startDate, endDate)).thenReturn(mockResList);
+		when(reservationDateRepoMock.findActiveReservationsInInterval(startDate, endDate)).thenReturn(mockResDates);
 
 		List<LocalDate> availableDates = reservationService.getAllAvailableDates(startDate, endDate);
 
-		assertTrue(availableDates.size() == 0);
+		assertTrue(availableDates.size() == 1);
 	}
 
 	@Test
@@ -68,19 +77,18 @@ public class ReservationServiceTest {
 
 		LocalDate startDateRes1 = LocalDate.now().plusDays(2);
 		LocalDate endDateRes1 = LocalDate.now().plusDays(4);
+		List<ReservationDate> mockResDates = getReservationDateListFromRange(startDateRes1, endDateRes1);
 
 		LocalDate startDateRes2 = LocalDate.now().plusDays(6);
 		LocalDate endDateRes2 = LocalDate.now().plusDays(8);
+		mockResDates.addAll(getReservationDateListFromRange(startDateRes2, endDateRes2));
 
-		Reservation mockRes1 = Reservation.builder().checkinDate(startDateRes1).checkoutDate(endDateRes1).build();
-		Reservation mockRes2 = Reservation.builder().checkinDate(startDateRes2).checkoutDate(endDateRes2).build();
-
-		when(reservationRepoMock.findActiveReservationsInInterval(startDate, endDate))
-				.thenReturn(Arrays.asList(mockRes1, mockRes2));
+		when(reservationDateRepoMock.findActiveReservationsInInterval(startDate, endDate))
+				.thenReturn(mockResDates);
 
 		List<LocalDate> availableDates = reservationService.getAllAvailableDates(startDate, endDate);
 
-		assertTrue(availableDates.size() == 5);
+		assertTrue(availableDates.size() == 6);
 	}
 
 	@Test(expected = BadRequestException.class)
@@ -129,8 +137,8 @@ public class ReservationServiceTest {
 		Reservation reservationToSave = Reservation.builder().checkinDate(startDate).checkoutDate(endDate).build();
 		Reservation expectedReservation = Reservation.builder().checkinDate(startDate).checkoutDate(endDate)
 				.id(UUID.fromString(MOCK_UUID)).isActive(true).build();
-
-		when(reservationRepoMock.findActiveReservationsInInterval(startDate, endDate)).thenReturn(new ArrayList<>());
+		
+		when(reservationDateRepoMock.findActiveReservationsInInterval(startDate, endDate)).thenReturn(new ArrayList<>());
 		when(reservationRepoMock.save(reservationToSave)).thenReturn(expectedReservation);
 
 		Reservation savedReservation = reservationService.createNewReservation(reservationToSave);
@@ -148,11 +156,10 @@ public class ReservationServiceTest {
 		LocalDate endDateOverlapping = LocalDate.now().plusDays(4);
 
 		Reservation reservationToSave = Reservation.builder().checkinDate(startDate).checkoutDate(endDate).build();
-		Reservation reservationOverlapping = Reservation.builder().checkinDate(startDateOverlapping)
-				.checkoutDate(endDateOverlapping).build();
-
-		when(reservationRepoMock.findActiveReservationsInInterval(startDate, endDate))
-				.thenReturn(Arrays.asList(reservationOverlapping));
+		List<ReservationDate> mockResDates = getReservationDateListFromRange(startDateOverlapping, endDateOverlapping);
+		
+		when(reservationDateRepoMock.findActiveReservationsInInterval(startDate, endDate))
+		.thenReturn(mockResDates);
 
 		reservationService.createNewReservation(reservationToSave);
 	}
@@ -204,11 +211,9 @@ public class ReservationServiceTest {
 		LocalDate startDateOverlapping = LocalDate.now().plusDays(4);
 		LocalDate endDateOverlapping = LocalDate.now().plusDays(6);
 
-		Reservation reservationOverlapping = Reservation.builder().checkinDate(startDateOverlapping)
-				.checkoutDate(endDateOverlapping).isActive(true).id(UUID.fromString(MOCK_UUID.stripTrailing())).build();
+		List<ReservationDate> mockResDates = getReservationDateListFromRange(startDateOverlapping, endDateOverlapping);
 
-		when(reservationRepoMock.findActiveReservationsInInterval(startDateUpdate, endDateUpdate))
-				.thenReturn(Arrays.asList(reservationOverlapping));
+		when(reservationDateRepoMock.findActiveReservationsInInterval(startDateUpdate, endDateUpdate)).thenReturn(mockResDates);
 		when(reservationRepoMock.findById(uuid)).thenReturn(mockResOptional);
 
 		reservationService.updateReservation(MOCK_UUID, reservationToSave);
@@ -287,5 +292,12 @@ public class ReservationServiceTest {
 		when(reservationRepoMock.findById(uuid)).thenReturn(mockResOptional);
 
 		reservationService.cancelReservation(MOCK_UUID);
+	}
+
+	private List<ReservationDate> getReservationDateListFromRange(LocalDate startDate, LocalDate endDate) {
+		List<LocalDate> dates = Stream.iterate(startDate, date -> date.plusDays(1))
+				.limit(ChronoUnit.DAYS.between(startDate, endDate)).collect(Collectors.toList());
+		return dates.stream().map(localDate -> ReservationDate.builder().date(localDate).build())
+				.collect(Collectors.toList());
 	}
 }
