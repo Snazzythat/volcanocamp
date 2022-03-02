@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -24,6 +25,8 @@ import com.upgradechallenge.volcanocamp.repository.ReservationRepository;
 
 @Service
 public class ReservationService {
+
+	private static final Logger log = org.slf4j.LoggerFactory.getLogger(ReservationService.class);
 
 	private static final String VALIDATION_ERROR_DATE_QUERY_PARAMS = "The check-in date must be before the check-out date";
 	private static final String VALIDATION_ERROR_ID = "The reservation id must be valid";
@@ -54,10 +57,13 @@ public class ReservationService {
 				.findActiveReservationsInInterval(startDate, endDate);
 
 		if (activeReservationDatesInPeriod.size() == 0) {
+			log.debug("No overlapping dates found in period from {} to {}", startDate, endDate);
 			return potentialAvailableDates;
 		} else {
 			List<LocalDate> occupiedDates = activeReservationDatesInPeriod.stream().map(res -> res.getDate())
 					.collect(Collectors.toList());
+			log.debug("Occupied dates overlapping dates found in period from {} to {} : {}", startDate, endDate,
+					occupiedDates);
 			potentialAvailableDates.removeAll(occupiedDates);
 		}
 
@@ -97,13 +103,15 @@ public class ReservationService {
 
 		// no overlaps, safe to save
 		if (activeReservationDatesInPeriod.isEmpty()) {
+			log.debug("No overlapping dates found in period from {} to {}", reservationToSave.getCheckinDate(), reservationToSave.getCheckoutDate());
 			reservationToSave.setActive(true);
 			List<ReservationDate> datesToReserve = convertLocalDateListToReservationList(extractDatesBetweenTwoDates(
 					reservationToSave.getCheckinDate(), reservationToSave.getCheckoutDate()));
 
+			log.debug("Saving new reservation dates, making them unavailable for others: {}", datesToReserve);
 			// persist dates of the new valid reservation
-		    reservationDateRepo.saveAll(datesToReserve);
-		    
+			reservationDateRepo.saveAll(datesToReserve);
+
 		} else {
 			throw new OccupiedPeriodException();
 		}
@@ -144,16 +152,18 @@ public class ReservationService {
 
 		// no overlaps, safe to update
 		if (activeReservationDatesInPeriod.isEmpty()) {
-
+			log.debug("No overlapping dates found in period from {} to {}", reservationToUpdate.getCheckinDate(), reservationToUpdate.getCheckoutDate());
 			// Remove current reservation dates from ReservationDate table
 			reservationDateRepo.deleteAll(oldReservationDates);
 
+			log.debug("Removing old reservation dates, making them available for others: {}", oldReservationDates);
 			// Save new dates to ReservationDate table
 			List<ReservationDate> newReservationDates = convertLocalDateListToReservationList(
 					extractDatesBetweenTwoDates(reservationToUpdate.getCheckinDate(),
 							reservationToUpdate.getCheckoutDate()));
+			log.debug("Saving new reservation dates, making them unavailable for others: {}", newReservationDates);
 			
-		    reservationDateRepo.saveAll(newReservationDates);
+			reservationDateRepo.saveAll(newReservationDates);
 
 		} else {
 			throw new OccupiedPeriodException();
@@ -192,6 +202,8 @@ public class ReservationService {
 		List<ReservationDate> reservationDatesToRemove = convertLocalDateListToReservationList(
 				extractDatesBetweenTwoDates(savedReservation.getCheckinDate(), savedReservation.getCheckoutDate()));
 		reservationDateRepo.deleteAll(reservationDatesToRemove);
+		
+		log.debug("Removing old reservation dates, making them available for others: {}", reservationDatesToRemove);
 
 		return reservationRepo.save(savedReservation);
 	}

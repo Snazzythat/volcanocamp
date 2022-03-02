@@ -7,9 +7,14 @@ import java.time.temporal.ChronoUnit;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
+import org.slf4j.Logger;
+
 import com.upgradechallenge.volcanocamp.dto.ReservationDto;
+import com.upgradechallenge.volcanocamp.service.ReservationService;
 
 public class ReservationDatesValidator implements ConstraintValidator<ValidReservationDates, ReservationDto> {
+	
+	private static final Logger log = org.slf4j.LoggerFactory.getLogger(ReservationDatesValidator.class);
 
 	private static final String VALIDATION_ERROR_DATES_REQUIRED = "Both check-in and check-out dates must be provided.";
 	private static final String VALIDATION_ERROR_DATES_FUTURE = "Both check-in and check-out dates must be in the future.";
@@ -29,7 +34,7 @@ public class ReservationDatesValidator implements ConstraintValidator<ValidReser
 
 	@Override
 	public boolean isValid(ReservationDto requestReservation, ConstraintValidatorContext constraintContext) {
-
+		
 		LocalDate requestCheckinDate = null;
 		LocalDate requestCheckoutDate = null;
 		try {
@@ -41,47 +46,59 @@ public class ReservationDatesValidator implements ConstraintValidator<ValidReser
 				requestCheckoutDate = LocalDate.parse(checkinOutDate, formatter);
 			}
 		} catch (Exception e) {
+			log.debug("Validate field format: failed");
 			this.setConstraintViolationInContext(VALIDATION_ERROR_INVALID_DATE_FORMAT, constraintContext);
 			return false;
 		}
+		log.debug("Validate field format: passed");
 
 		// Check if both dates are provided
 		// This can also be done via @NotNull in the DTO field validation
 		if (requestCheckinDate == null || requestCheckoutDate == null) {
+			log.debug("Both dates provided and not null: failed");
 			this.setConstraintViolationInContext(VALIDATION_ERROR_DATES_REQUIRED, constraintContext);
 			return false;
 		}
+		log.debug("Both dates provided and not null: passed");
 
 		// Check if both dates are in the future
 		LocalDate today = LocalDate.now();
 		if (today.isAfter(requestCheckinDate) || (today.isAfter(requestCheckoutDate))) {
+			log.debug("Both dates provided are in the future: failed");
 			this.setConstraintViolationInContext(VALIDATION_ERROR_DATES_FUTURE, constraintContext);
 			return false;
 		}
+		log.debug("Both dates provided are in the future: passed");
 
 		// Check if check-in date comes before check-out
 		if (requestCheckinDate.isAfter(requestCheckoutDate)) {
+			log.debug("Check-in date is before check-out date: failed");
 			this.setConstraintViolationInContext(VALIDATION_ERROR_CHECKIN_AFTER_CHECKOUT, constraintContext);
 			return false;
 		}
+		log.debug("Check-in date is before check-out date: passed");
 
 		// Check for reservation length
 		long reservationLength = ChronoUnit.DAYS.between(requestCheckinDate, requestCheckoutDate);
 
 		if (reservationLength < MIN_RESERVATION_LENGTH || reservationLength > MAX_RESERVATION_LENGTH) {
+			log.debug("Reservation length constraint: failed");
 			this.setConstraintViolationInContext(VALIDATION_ERROR_RESERVATION_LENGTH, constraintContext);
 			return false;
 		}
+		log.debug("Reservation length constraint: passed");
 
 		// Check for reservation start limits
 		LocalDate minReservationStart = today.plusDays(1);
 		LocalDate maxReservationStart = today.plusMonths(1);
 
 		if (requestCheckinDate.isBefore(minReservationStart) || requestCheckinDate.isAfter(maxReservationStart)) {
+			log.debug("Reservation check-in min and max dates: failed");
 			this.setConstraintViolationInContext(VALIDATION_ERROR_RESERVATION_START_LIMITS, constraintContext);
 			return false;
-		}
-
+		}	
+		log.debug("Reservation check-in min and max dates: passed");
+		
 		return true;
 	}
 

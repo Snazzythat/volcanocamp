@@ -2,11 +2,14 @@ plugins {
 	id 'org.springframework.boot' version '2.6.4'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
+	id 'application'
 }
 
 group = 'com.upgrade-challenge'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
+
+mainClassName = 'com.upgradechallenge.volcanocamp.VolcanocampApplication'
 
 configurations {
 	compileOnly {
@@ -22,14 +25,27 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
-    runtimeOnly 'mysql:mysql-connector-java'
+    runtimeOnly 'org.postgresql:postgresql'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation("junit:junit:4.13")
     testImplementation("org.mockito:mockito-inline:2.13.0")
     testImplementation('org.apache.httpcomponents:httpclient:4.5.13')
+}
+
+def springProfiles = {
+  args = ["--spring.profiles.active=dev"]
+}
+
+bootRun {
+  configure springProfiles;
+}
+
+run {
+  configure springProfiles;
 }
 
 test {
