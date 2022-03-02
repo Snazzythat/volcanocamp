@@ -136,7 +136,7 @@ public class ReservationServiceTest {
 
 		Reservation reservationToSave = Reservation.builder().checkinDate(startDate).checkoutDate(endDate).build();
 		Reservation expectedReservation = Reservation.builder().checkinDate(startDate).checkoutDate(endDate)
-				.id(UUID.fromString(MOCK_UUID)).isActive(true).build();
+				.id(UUID.fromString(MOCK_UUID)).active(true).build();
 		
 		when(reservationDateRepoMock.findActiveReservationsInInterval(startDate, endDate)).thenReturn(new ArrayList<>());
 		when(reservationRepoMock.save(reservationToSave)).thenReturn(expectedReservation);
@@ -172,16 +172,16 @@ public class ReservationServiceTest {
 		UUID uuid = UUID.fromString(MOCK_UUID);
 
 		Optional<Reservation> mockResOptional = Optional
-				.of(Reservation.builder().checkinDate(startDate).checkoutDate(endDate).id(uuid).isActive(true).build());
+				.of(Reservation.builder().checkinDate(startDate).checkoutDate(endDate).id(uuid).active(true).build());
 
 		LocalDate startDateUpdate = LocalDate.now().plusDays(2);
 		LocalDate endDateUpdate = LocalDate.now().plusDays(4);
 
 		Reservation reservationToSave = Reservation.builder().checkinDate(startDateUpdate).checkoutDate(endDateUpdate)
-				.id(UUID.fromString(MOCK_UUID)).isActive(true).build();
+				.id(UUID.fromString(MOCK_UUID)).active(true).build();
 
 		Reservation expectedUpdatedReservation = Reservation.builder().checkinDate(startDateUpdate)
-				.checkoutDate(endDateUpdate).id(UUID.fromString(MOCK_UUID)).isActive(true).build();
+				.checkoutDate(endDateUpdate).id(UUID.fromString(MOCK_UUID)).active(true).build();
 
 		when(reservationRepoMock.findById(uuid)).thenReturn(mockResOptional);
 		when(reservationRepoMock.save(reservationToSave)).thenReturn(expectedUpdatedReservation);
@@ -200,13 +200,13 @@ public class ReservationServiceTest {
 		UUID uuid = UUID.fromString(MOCK_UUID);
 
 		Optional<Reservation> mockResOptional = Optional
-				.of(Reservation.builder().checkinDate(startDate).checkoutDate(endDate).id(uuid).isActive(true).build());
+				.of(Reservation.builder().checkinDate(startDate).checkoutDate(endDate).id(uuid).active(true).build());
 
 		LocalDate startDateUpdate = LocalDate.now().plusDays(3);
 		LocalDate endDateUpdate = LocalDate.now().plusDays(5);
 
 		Reservation reservationToSave = Reservation.builder().checkinDate(startDateUpdate).checkoutDate(endDateUpdate)
-				.id(UUID.fromString(MOCK_UUID)).isActive(true).build();
+				.id(UUID.fromString(MOCK_UUID)).active(true).build();
 
 		LocalDate startDateOverlapping = LocalDate.now().plusDays(4);
 		LocalDate endDateOverlapping = LocalDate.now().plusDays(6);
@@ -227,7 +227,7 @@ public class ReservationServiceTest {
 		UUID uuid = UUID.fromString(MOCK_UUID);
 
 		Optional<Reservation> mockResOptional = Optional.of(
-				Reservation.builder().checkinDate(startDate).checkoutDate(endDate).id(uuid).isActive(false).build());
+				Reservation.builder().checkinDate(startDate).checkoutDate(endDate).id(uuid).active(false).build());
 
 		LocalDate startDateUpdate = LocalDate.now().plusDays(3);
 		LocalDate endDateUpdate = LocalDate.now().plusDays(5);
@@ -267,11 +267,11 @@ public class ReservationServiceTest {
 		UUID uuid = UUID.fromString(MOCK_UUID);
 
 		Optional<Reservation> mockResOptional = Optional
-				.of(Reservation.builder().checkinDate(startDate).checkoutDate(endDate).id(uuid).isActive(true).build());
+				.of(Reservation.builder().checkinDate(startDate).checkoutDate(endDate).id(uuid).active(true).build());
 		when(reservationRepoMock.findById(uuid)).thenReturn(mockResOptional);
 		
 		Reservation expectedUpdatedReservation = Reservation.builder().checkinDate(startDate)
-				.checkoutDate(endDate).id(UUID.fromString(MOCK_UUID)).isActive(false).build();
+				.checkoutDate(endDate).id(UUID.fromString(MOCK_UUID)).active(false).build();
 		when(reservationRepoMock.save(mockResOptional.get())).thenReturn(expectedUpdatedReservation);
 		
 		Reservation reservation = reservationService.cancelReservation(MOCK_UUID);

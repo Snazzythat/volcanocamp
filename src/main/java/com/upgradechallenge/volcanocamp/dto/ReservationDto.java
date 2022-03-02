@@ -28,7 +28,7 @@ public class ReservationDto {
 	private UUID id;
 	
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
-	private boolean isActive;
+	private boolean active;
 	
 	@Schema(description = "User full name", example="John Doe")
 	@NotBlank(message = "Name must not be emty")
@@ -39,10 +39,10 @@ public class ReservationDto {
 	@Email(message = "Email must be a valid e-mail")
 	private String userEmail;
 
-	@Schema(description = "Check-in date", format= "yyyy-MM-dd", example="2022-02-02")
+	@Schema(description = "Check-in date", format= "yyyy-MM-dd", example="2022-03-20")
 	private String checkinDate;
 
-	@Schema(description = "Check-out date", format= "yyyy-MM-dd",example="2022-02-03")
+	@Schema(description = "Check-out date", format= "yyyy-MM-dd",example="2022-03-22")
 	private String checkoutDate;
 	
 }

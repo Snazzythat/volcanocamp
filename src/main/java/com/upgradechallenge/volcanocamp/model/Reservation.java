@@ -56,6 +56,6 @@ public class Reservation implements Serializable {
 	private LocalDate cancelledDate;
 
 	@Column(name = "is_active")
-	private boolean isActive;
+	private boolean active;
 
 }

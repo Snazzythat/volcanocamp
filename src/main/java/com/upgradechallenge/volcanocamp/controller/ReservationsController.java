@@ -136,7 +136,7 @@ public class ReservationsController {
 		return ReservationDto.builder().userEmail(reservation.getUserEmail())
 				.userFullName(reservation.getUserFullName()).checkinDate(reservation.getCheckinDate().toString())
 				.checkoutDate(reservation.getCheckoutDate().toString()).id(reservation.getId())
-				.isActive(reservation.isActive()).build();
+				.active(reservation.isActive()).build();
 	}
 
 }
