@@ -11,7 +11,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/Snazzythat/volcanocamp">
-    <img src="readme-content/volcano-logo.PNG" alt="Logo" width="80" height="80">
+    <img src="readme-content/volcano-logo.PNG" alt="Logo" width="280" height="280">
   </a>
 
 <h3 align="center">VolcanoCamp</h3>
@@ -35,19 +35,22 @@
     <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
+        <li><a href="#problem-to-solve">Problem to solve</a></li>
+        <li><a href="#system-requirements">System Requirements</a></li>
         <li><a href="#built-with">Built With</a></li>
       </ul>
     </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
+   <li>
+      <a href="#building/running-the-application">Building/Running the application</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
+        <li><a href="#building-the-application">Building the application</a></li>
+        <li><a href="#running-in-dev-mode">Running in dev mode</a></li>
+        <li><a href="#running-in-prod-mode">Running in prod mode</a></li>
       </ul>
     </li>
+    <li><a href="#test-execution">Test execution</a></li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#examples">Examples</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
   </ol>
@@ -114,7 +117,7 @@ Note: The project has been developed using Eclipse IDE (20190314-1200):
 - PostgreSQL and pgAdmin4 installed on your machine with default server (if you want to execute the application in production)
 
 <!-- GETTING STARTED -->
-### Getting Started
+## Getting Started
 - Clone this repo in your local environment
 - Import the project in your IDE as Gradle Project.
 - [Configure your IDE to support Lombok](https://www.baeldung.com/lombok-ide)
@@ -145,7 +148,10 @@ Execution output:
 
 ![DEV run][dev-run]
 
-To note, you can access the H2 console in browser when running in dev mode. Once the application started, go to http://localhost:8080/h2-console
+To note, you can access the H2 console in browser when running in dev mode. Once the application started, go to 
+```
+http://localhost:8080/h2-console
+```
 
 You will be propted to login. Use credentials and JDBC resource url provided in application-dev.properties:
 
@@ -166,8 +172,10 @@ Execution output:
 
 ![DEV run][prod-run]
 
-To note, you can use pgAdmin4 (native or web) to access PostgreSQL database. Simply open the pgAdmin4 application (using ), access the default server on http://localhost:5432
-
+To note, you can use pgAdmin4 (native or web) to access PostgreSQL database. Simply open the pgAdmin4 application (using ), access the default server on 
+```
+http://localhost:5432
+```
 Example of reservations table data:
 
 ![Postgre reservations][reservations-postgresql]
@@ -217,7 +225,10 @@ registration can start at the same instance).
 
 <br />
 <br />
-For in-depth API usage (including query parameters and request body fields format), examples and request responses you can access the Swagger UI running along with the application at http://localhost:8080/swagger-ui/index.html:
+For in-depth API usage (including query parameters and request body fields format), examples and request responses you can access the Swagger UI running along with the application at 
+```
+http://localhost:8080/swagger-ui/index.html
+```
 
 ![Swagger-UI][product-screenshot]
 
