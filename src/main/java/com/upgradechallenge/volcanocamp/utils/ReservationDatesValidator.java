@@ -8,9 +8,10 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import com.upgradechallenge.volcanocamp.configuration.ReservationConfiguration;
 import com.upgradechallenge.volcanocamp.dto.ReservationDto;
-import com.upgradechallenge.volcanocamp.service.ReservationService;
 
 public class ReservationDatesValidator implements ConstraintValidator<ValidReservationDates, ReservationDto> {
 	
@@ -24,8 +25,8 @@ public class ReservationDatesValidator implements ConstraintValidator<ValidReser
 			+ " day ahead of arrival and up to 1 month in advance";
 	private static final String VALIDATION_ERROR_INVALID_DATE_FORMAT = "Both check-in and check-out dates must have valid format: yyyy-MM-dd";
 
-	private static final long MIN_RESERVATION_LENGTH = 1;
-	private static final long MAX_RESERVATION_LENGTH = 3;
+	@Autowired
+	ReservationConfiguration reservationConfig;
 
 	@Override
 	public void initialize(ValidReservationDates constraintAnnotation) {
@@ -88,7 +89,7 @@ public class ReservationDatesValidator implements ConstraintValidator<ValidReser
 		// Check for reservation length
 		long reservationLength = ChronoUnit.DAYS.between(requestCheckinDate, requestCheckoutDate);
 
-		if (reservationLength < MIN_RESERVATION_LENGTH || reservationLength > MAX_RESERVATION_LENGTH) {
+		if (reservationLength < reservationConfig.getMinLength() || reservationLength > reservationConfig.getMaxLength()) {
 			log.debug("Reservation length constraint: failed");
 			this.setConstraintViolationInContext(VALIDATION_ERROR_RESERVATION_LENGTH, constraintContext);
 			return false;
@@ -96,8 +97,8 @@ public class ReservationDatesValidator implements ConstraintValidator<ValidReser
 		log.debug("Reservation length constraint: passed");
 
 		// Check for reservation start limits
-		LocalDate minReservationStart = today.plusDays(1);
-		LocalDate maxReservationStart = today.plusMonths(1);
+		LocalDate minReservationStart = today.plusDays(reservationConfig.getMinStartOffsetDays());
+		LocalDate maxReservationStart = today.plusDays(reservationConfig.getMaxStartOffsetDays());
 
 		if (requestCheckinDate.isBefore(minReservationStart) || requestCheckinDate.isAfter(maxReservationStart)) {
 			log.debug("Reservation check-in min and max dates: failed");

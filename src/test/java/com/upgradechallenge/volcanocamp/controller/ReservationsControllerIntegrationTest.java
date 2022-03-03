@@ -55,6 +55,8 @@ public class ReservationsControllerIntegrationTest {
 	private int randomServerPort;
 
 	private RestTemplate patchRestTemplate;
+	
+	private String baseUrl;
 
 	@Before
 	public void setup() {
@@ -62,11 +64,12 @@ public class ReservationsControllerIntegrationTest {
 		patchRestTemplate = restTemplate.getRestTemplate();
 		HttpClient httpClient = HttpClientBuilder.create().build();
 		patchRestTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory(httpClient));
+		baseUrl = "http://localhost:" + randomServerPort;
 	}
 
 	@Test
 	public void testInvalidReservationBoundariesAndDateConstraints() {
-		String url = getBaseUrl();
+		String url = getBaseUrlReservations();
 
 		// Test creation of a new Reservation with check-in less than 1 day from today
 		ReservationDto reservation = getReservationWithDates(LocalDate.now(), CHECKOUT_DATE);
@@ -104,27 +107,29 @@ public class ReservationsControllerIntegrationTest {
 
 	@Test
 	public void testGetAllAvailableDates() {
-		String url = getBaseUrl();
+		String datesUrl = getBaseUrlAvailableDates();
+		String reservationsUrl = getBaseUrlReservations();
+		
 		HttpHeaders headers = new HttpHeaders();
 		headers.set("Accept", "application/json");
 		HttpEntity<AvailableDatesDto> request = new HttpEntity<>(headers);
 
 		// Test with no boundaries provided should return the whole month available
 		// (minus present day)
-		ResponseEntity<AvailableDatesDto> availabilitiesResult = this.restTemplate.exchange(url, HttpMethod.GET,
+		ResponseEntity<AvailableDatesDto> availabilitiesResult = this.restTemplate.exchange(datesUrl, HttpMethod.GET,
 				request, AvailableDatesDto.class);
 
 		assertEquals(31, availabilitiesResult.getBody().getAvailableDates().size());
 
 		// Test with both boundary limits provided
-		availabilitiesResult = this.restTemplate.exchange(url + "?fromDate={fromDate}&&toDate={toDate}", HttpMethod.GET,
+		availabilitiesResult = this.restTemplate.exchange(datesUrl + "?fromDate={fromDate}&&toDate={toDate}", HttpMethod.GET,
 				request, AvailableDatesDto.class, CHECKIN_DATE.toString(), CHECKIN_DATE.plusDays(5).toString());
 
 		assertEquals(6, availabilitiesResult.getBody().getAvailableDates().size());
 
 		// Test with invalid boundaries provided
 		ResponseEntity<OperationError> errorResult = this.restTemplate.exchange(
-				url + "?fromDate={fromDate}&&toDate={toDate}", HttpMethod.GET, request, OperationError.class,
+				datesUrl + "?fromDate={fromDate}&&toDate={toDate}", HttpMethod.GET, request, OperationError.class,
 				CHECKIN_DATE.plusDays(5).toString(), CHECKIN_DATE.toString());
 
 		assertEquals(400, errorResult.getStatusCodeValue());
@@ -137,22 +142,22 @@ public class ReservationsControllerIntegrationTest {
 		headers = new HttpHeaders();
 		headers.set("Content-Type", "application/json");
 		HttpEntity<ReservationDto> requestReservation = new HttpEntity<>(reservation, headers);
-		ResponseEntity<ReservationDto> resultReservation = this.restTemplate.postForEntity(url, requestReservation,
+		ResponseEntity<ReservationDto> resultReservation = this.restTemplate.postForEntity(reservationsUrl, requestReservation,
 				ReservationDto.class);
 		assertEquals(201, resultReservation.getStatusCodeValue());
 
-		availabilitiesResult = this.restTemplate.exchange(url, HttpMethod.GET, request, AvailableDatesDto.class);
+		availabilitiesResult = this.restTemplate.exchange(datesUrl, HttpMethod.GET, request, AvailableDatesDto.class);
 
 		assertEquals(29, availabilitiesResult.getBody().getAvailableDates().size());
 
 		// Cleanup by canceling the registration
-		this.restTemplate.delete(url + '/' + resultReservation.getBody().getId());
+		this.restTemplate.delete(reservationsUrl + '/' + resultReservation.getBody().getId());
 
 	}
 
 	@Test
 	public void testSuccessfulReservationCreationFetchThenUpdate() {
-		String url = getBaseUrl();
+		String url = getBaseUrlReservations();
 
 		ReservationDto reservation = getReservationWithDates(CHECKIN_DATE, CHECKOUT_DATE);
 
@@ -194,7 +199,7 @@ public class ReservationsControllerIntegrationTest {
 
 	@Test
 	public void testCreateReservationWithOverlappingAndNonOverlappingReservations() {
-		String url = getBaseUrl();
+		String url = getBaseUrlReservations();
 
 		ReservationDto reservation1 = getReservationWithDates(CHECKIN_DATE, CHECKOUT_DATE);
 		ReservationDto reservation2 = getReservationWithDates(CHECKIN_DATE.plusDays(4), CHECKOUT_DATE.plusDays(5));
@@ -243,7 +248,7 @@ public class ReservationsControllerIntegrationTest {
 
 	@Test
 	public void testConcurrentRegistrationSameReservationFlow() throws InterruptedException, ExecutionException {
-		String baseUrl = getBaseUrl();
+		String baseUrl = getBaseUrlReservations();
 
 		ReservationDto reservation = getReservationWithDates(CHECKIN_DATE, CHECKOUT_DATE);
 
@@ -278,7 +283,7 @@ public class ReservationsControllerIntegrationTest {
 	@Test
 	public void testConcurrentRegistrationTwoReservationsOverlappingFlow()
 			throws InterruptedException, ExecutionException {
-		String baseUrl = getBaseUrl();
+		String baseUrl = getBaseUrlReservations();
 
 		// Test creation of two overlapping reservations, only one must succeed with 201
 		// status
@@ -316,8 +321,11 @@ public class ReservationsControllerIntegrationTest {
 				.userEmail(TEST_USER_EMAIL).userFullName(TEST_USER_FULLNAME).build();
 	}
 
-	private String getBaseUrl() {
-		return "http://localhost:" + randomServerPort + "/api/v1/reservations";
+	private String getBaseUrlReservations() {
+		return baseUrl + "/api/v1/reservations";
 	}
-
+	
+	private String getBaseUrlAvailableDates() {
+		return baseUrl + "/api/v1/available-dates";
+	}
 }

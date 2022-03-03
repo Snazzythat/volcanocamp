@@ -2,6 +2,7 @@ package com.upgradechallenge.volcanocamp.utils;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 
@@ -11,11 +12,14 @@ import javax.validation.ConstraintValidatorContext.ConstraintViolationBuilder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import com.upgradechallenge.volcanocamp.configuration.ReservationConfiguration;
 import com.upgradechallenge.volcanocamp.dto.ReservationDto;
+import com.upgradechallenge.volcanocamp.service.ReservationService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ReservationDatesValidatorTest {
@@ -33,17 +37,23 @@ public class ReservationDatesValidatorTest {
 	
 	@Mock
 	ConstraintViolationBuilder builder;
-
-	ReservationDatesValidator reservationDatesValidator;
+	
+	@Mock
+	ReservationConfiguration reservationConfigMock;
+	
+	@InjectMocks
+	ReservationDatesValidator reservationDatesValidator = new ReservationDatesValidator();
 
 	@Before
 	public void init() {
 
-		reservationDatesValidator = new ReservationDatesValidator();
-		reservationDatesValidator.initialize(validDates);
-	
-		Mockito.when(constraintValidatorContext.buildConstraintViolationWithTemplate(Mockito.any()))
+		when(constraintValidatorContext.buildConstraintViolationWithTemplate(Mockito.any()))
 				.thenReturn(builder);
+		
+		when(reservationConfigMock.getMinLength()).thenReturn(1);
+		when(reservationConfigMock.getMaxLength()).thenReturn(3);
+		when(reservationConfigMock.getMinStartOffsetDays()).thenReturn(1);
+		when(reservationConfigMock.getMaxStartOffsetDays()).thenReturn(31);
 	}
 
 	@Test
