@@ -16,7 +16,7 @@ import com.upgradechallenge.volcanocamp.model.ReservationDate;
 @Repository
 public interface ReservationDateRepository extends JpaRepository<ReservationDate, UUID> {
 	
-	@Lock(LockModeType.PESSIMISTIC_READ)
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select rd from ReservationDate rd where rd.date >= ?1 and rd.date < ?2")
 	List<ReservationDate> findActiveReservationsInInterval(LocalDate fromDate, LocalDate toDate);
 	
