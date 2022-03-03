@@ -19,7 +19,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import com.upgradechallenge.volcanocamp.configuration.ReservationConfiguration;
 import com.upgradechallenge.volcanocamp.dto.ReservationDto;
-import com.upgradechallenge.volcanocamp.service.ReservationService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ReservationDatesValidatorTest {

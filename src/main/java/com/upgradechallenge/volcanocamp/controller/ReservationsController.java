@@ -117,7 +117,8 @@ public class ReservationsController {
 			@Content(mediaType = "application/json", schema = @Schema(implementation = ReservationDto.class)) }),
 			@ApiResponse(responseCode = "400", description = "Bad request", content = @Content),
 			@ApiResponse(responseCode = "409", description = "Conflict (Reservation has overlapping dates with another reservation(s))", content = @Content),
-			@ApiResponse(responseCode = "404", description = "Not found (Reservation with provided id does not exist)", content = @Content) })
+			@ApiResponse(responseCode = "404", description = "Not found (Reservation with provided id does not exist)", content = @Content),
+			@ApiResponse(responseCode = "405", description = "Method not allowed found (Reservation cannot be updated since it has been cancelled)", content = @Content)})
 	public ResponseEntity<ReservationDto> updateReservation(@PathVariable(required = true) String id,
 			@RequestBody @Valid ReservationDto reservationDto) {
 

@@ -11,7 +11,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/Snazzythat/volcanocamp">
-    <img src="readme-content/volcano-logo.png" alt="Logo" width="80" height="80">
+    <img src="readme-content/volcano-logo.png" alt="Logo" width="80" height="80" style={mix-blend-mode: multiply}>
   </a>
 
 <h3 align="center">VolcanoCamp</h3>
@@ -87,6 +87,8 @@ date(s). Demonstrate with appropriate test cases that the system can gracefully 
 - In general, the system should be able to handle large volume of requests for getting the campsite availability.
 - There are no restrictions on how reservations are stored as as long as system constraints are not violated.
 
+Side-note: No authentication or authorization was implemented in this project for simplicity purposes.
+
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ### Built With
@@ -100,7 +102,7 @@ date(s). Demonstrate with appropriate test cases that the system can gracefully 
 
 Note: The project has been developed using Eclipse IDE (20190314-1200):
 
-![IDE Screen Shot][eclipse-ide]
+![IDE Screen Shot][ide-screenshot]
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -179,10 +181,16 @@ Example of dates table data:
 
 
 ## Test execution
+In order to execute Controller integration tests as well as unit tests, simply run:
+```
+cd <cloned repo directory>
+./gradlew clean test
+```
 
-<!-- TODO -->
+At the end of the execution, you should be able to see the tests results"
 
-<!-- USAGE EXAMPLES -->
+![tests][tests]
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -190,14 +198,410 @@ Example of dates table data:
 ## Usage
 
 <!-- TODO -->
-The following API end points are available:
+The following API end points and methods are provided:
+
+* GET /api/v1/available-dates (Get all available dates for reservations)
+* POST /api/v1/reservations (Create a new reservation)
+* GET /api/v1/reservations/{id} (Fetch a given reservation by id)
+* DELETE  /api/v1/reservations/{id} (Delete a given reservation by id)
+* PATCH  /api/v1/reservations/{id} (Update a given reservation by id)
+
+Note:
+The format of provided dates in request body or query parameters is yyyy-MM-dd as per [Date ISO](https://en.wikipedia.org/wiki/ISO_8601)
+
+<br />
+The reservation date period is considered to have all dates in the period reserved and last date as available (since due to the requirement,
+the check-out and check-in are at 00:00). Therefore, as an example, a reservation between 2022-03-03 and 2022-03-05 will have dates reserved:
+2022-03-03,2022-03-03,2022-03-04 and 2022-03-05 is available (since current reservation check-out is at 2022-03-03, 00:00 and the next available
+registration can start at the same instance).
+
+<br />
+<br />
+For in-depth API usage (including query parameters and request body fields format), examples and request responses you can access the Swagger UI running along with the application at http://localhost:8080/swagger-ui/index.html:
+
+![Swagger-UI][product-screenshot]
+
+
+### Examples:
+
+* Fetching all available dates between 2022-03-03 and 2022-03-20 using fromDate and toDate query parameters:
+
+Example of a resulting GET request URl is
+```
+GET http://localhost:8080/api/v1/available-dates?fromDate=2022-03-03&toDate=2022-03-20
+```
+
+Returning a 200 response with all available dates:
+```
+{
+  "fromDate": "2022-03-04",
+  "toDate": "2022-03-20",
+  "availableDates": [
+    "2022-03-04",
+    "2022-03-05",
+    "2022-03-06",
+    "2022-03-07",
+    "2022-03-08",
+    "2022-03-09",
+    "2022-03-10",
+    "2022-03-11",
+    "2022-03-12",
+    "2022-03-13",
+    "2022-03-14",
+    "2022-03-15",
+    "2022-03-16",
+    "2022-03-17",
+    "2022-03-18",
+    "2022-03-19",
+    "2022-03-20"
+  ]
+}
+```
+<br />
+
+To note, if no dates are provided, the default period used for date fetching is 1 month as per requirement. Therefore,
+if todays date is 2022-03-03 and no reservations have been made yet, all dates starting are returned starting with 2022-03-04
+(since as per requirement, the first available date is today + 1 day) and 2022-04-03 inclusively:
+
+```
+GET http://localhost:8080/api/v1/available-dates
+```
+
+Returning a 200 response with all available dates:
+```
+{
+  "fromDate": "2022-03-04",
+  "toDate": "2022-04-03",
+  "availableDates": [
+    "2022-03-04",
+    "2022-03-05",
+    "2022-03-06",
+    "2022-03-07",
+    "2022-03-08",
+    "2022-03-09",
+    "2022-03-10",
+    "2022-03-11",
+    "2022-03-12",
+    "2022-03-13",
+    "2022-03-14",
+    "2022-03-15",
+    "2022-03-16",
+    "2022-03-17",
+    "2022-03-18",
+    "2022-03-19",
+    "2022-03-20",
+    "2022-03-21",
+    "2022-03-22",
+    "2022-03-23",
+    "2022-03-24",
+    "2022-03-25",
+    "2022-03-26",
+    "2022-03-27",
+    "2022-03-28",
+    "2022-03-29",
+    "2022-03-30",
+    "2022-03-31",
+    "2022-04-01",
+    "2022-04-02",
+    "2022-04-03"
+  ]
+}
+```
+
+<br />
+
+To note, dates in the past or more than 1 month can also be provided. In this case, the fromDate parameter will be adjusted to the closest available
+date (today + 1 day) and toDate parameter will ne adjusted to be the last possible reservation date (today + 1 month).
+
+<br />
+
+* Creating a new reservation:
+
+Example of a resulting resulting POST request URl is
+```
+POST http://localhost:8080/api/v1/reservations
+```
+
+with body
+```
+{
+  "userFullName": "John Doe",
+  "userEmail": "john.doe@upgrade.com",
+  "checkinDate": "2022-03-20",
+  "checkoutDate": "2022-03-22"
+}
+```
+
+Returning a 201 response with the created reservation containing a generated UUID:
+```
+{
+  "id": "29642174-2f3c-4714-b922-c93af7e57397",
+  "active": true,
+  "userFullName": "John Doe",
+  "userEmail": "john.doe@upgrade.com",
+  "checkinDate": "2022-03-20",
+  "checkoutDate": "2022-03-22"
+}
+```
+Note 1: the returned active field is an indicator to the user that he registration is active (not cancelled). It is a read-only field, just like the id field.
+Note 2: request validation (date validity, format) is performed as well as verification if the reservation to be created does not overlap with existing reservation(s):
+
+Returning a 409 response indicating that the reservation conflicts with another reservation:
+```
+{
+  "status": "CONFLICT",
+  "errorMessage": "Occupied period error",
+  "details": [
+    "There is at least one unavailable date in the provided time period"
+  ],
+  "timeStamp": "2022-03-03 05:01:18"
+}
+```
+
+Returning a 400 response indicating that the the one of the date field format is bad:
+POST:
+```
+{
+  "userFullName": "John Doe",
+  "userEmail": "john.doe@upgrade.com",
+  "checkinDate": "2022-03-20",
+  "checkoutDate": "2022-03-22aaa"
+}
+```
+Error:
+```
+{
+  "status": "BAD_REQUEST",
+  "errorMessage": "Validation error",
+  "details": [
+    "Both check-in and check-out dates must have valid format: yyyy-MM-dd"
+  ],
+  "timeStamp": "2022-03-03 05:04:19"
+}
+```
+
+Returning a 400 response indicating that the the check-in date cannot be before check-out date
+POST:
+```
+{
+  "userFullName": "John Doe",
+  "userEmail": "john.doe@upgrade.com",
+  "checkinDate": "2022-03-08",
+  "checkoutDate": "2022-03-05"
+}
+```
+Error:
+```
+{
+  "status": "BAD_REQUEST",
+  "errorMessage": "Validation error",
+  "details": [
+    "The check-in date must be before the check-out date"
+  ],
+  "timeStamp": "2022-03-03 05:41:25"
+}
+```
+
+* Getting a new reservation (using an existing id)
+
+Example of a resulting GET request URl is (with a valid UUID)
+```
+GET http://localhost:8080/api/v1/reservations/29642174-2f3c-4714-b922-c93af7e57397
+```
+
+Returning a 200 response with the requested reservation
+```
+{
+  "id": "29642174-2f3c-4714-b922-c93af7e57397",
+  "active": true,
+  "userFullName": "John Doe",
+  "userEmail": "john.doe@upgrade.com",
+  "checkinDate": "2022-03-20",
+  "checkoutDate": "2022-03-22"
+}
+```
+
+Note, error cases exist, such as invalid id or the reservation does not exist. For example, 404 on non-existing reservation:
+
+```
+GET http://localhost:8080/api/v1/reservations/29642174-2f3c-4714-b922-c93af7e57395
+```
+Error:
+```
+{
+  "status": "NOT_FOUND",
+  "errorMessage": "Resource not found",
+  "details": [
+    "Reservation with id 29642174-2f3c-4714-b922-c93af7e57395 is not found"
+  ],
+  "timeStamp": "2022-03-03 05:21:52"
+}
+```
+
+* Updateing an existing reservation (using an existing id and valid request)
+
+Example of a resulting PATCH request URl (with a valid UUID):
+```
+PATCH http://localhost:8080/api/v1/reservations/29642174-2f3c-4714-b922-c93af7e57397
+
+```
+and body
+```
+{
+  "userFullName": "John DoeTwo",
+  "userEmail": "john.doe_two@upgrade.com",
+  "checkinDate": "2022-03-25",
+  "checkoutDate": "2022-03-27"
+}
+```
+In case above, the user changed their full name, email as well as checkin and check out date (provided that there no ovelap wiith other registations)
+
+Returning a 200 response with the updated registration:
+```
+{
+  "id": "29642174-2f3c-4714-b922-c93af7e57397",
+  "active": true,
+  "userFullName": "John DoeTwo",
+  "userEmail": "john.doe_two@upgrade.com",
+  "checkinDate": "2022-03-25",
+  "checkoutDate": "2022-03-27"
+}
+```
+
+Note, error cases exist, such as invalid id, invalid registration dates, invalid date format, the reservation does not exist or registration dates overlap with an existing reservation:
+
+```
+PATCH http://localhost:8080/api/v1/reservations/29642174-2f3c-4714-b922-c93af7e57397
+```
+and body
+```
+{
+  "userFullName": "John DoeTwo",
+  "userEmail": "john.doe_two@upgrade.com",
+  "checkinDate": "2022-03-28",
+  "checkoutDate": "2022-03-30"
+}
+```
+Error:
+```
+{
+  "status": "CONFLICT",
+  "errorMessage": "Occupied period error",
+  "details": [
+    "There is at least one unavailable date in the provided time period"
+  ],
+  "timeStamp": "2022-03-03 05:33:59"
+}
+```
+
+In the example above, there is already an active registration with dates 2022-03-29 - 2022-03-31, hence the attempt with 2022-03-28 - 2022-03-30 fails
+<br />
+
+* Cancelling an existing reservation (using an existing id)
+
+Example of a resulting DELETE request URl is (with a valid UUID)
+```
+DELETE http://localhost:8080/api/v1/reservations/29642174-2f3c-4714-b922-c93af7e57397
+```
+Returning a 204 response (NO_CONTENT) indicating that the reservation has been cancelled
+
+Note, error cases exist, such as invalid id or the reservation does not exist. For example, 404 on non-existing reservation:
+```
+DELETE http://localhost:8080/api/v1/reservations/29642174-2f3c-4714-b922-c93af7e57394
+```
+Error:
+```
+{
+  "status": "NOT_FOUND",
+  "errorMessage": "Resource not found",
+  "details": [
+    "Reservation with id 29642174-2f3c-4714-b922-c93af7e57394 is not found"
+  ],
+  "timeStamp": "2022-03-03 05:21:52"
+}
+```
+
+A cancelled reservation still exists in the database, however, its 'active' field is set to false. The dates of that reservation become available for new reservations.
+
+Updating the cancelled reservation via PATCH will be blocked and a 405 response is returned:
+```
+{
+  "status": "METHOD_NOT_ALLOWED",
+  "errorMessage": "Operation is not allowed",
+  "details": [
+    "The reservation that has been cancelled cannot be updated"
+  ],
+  "timeStamp": "2022-03-03 05:48:47"
+}
+```
+
+### Postman and curl
+
+To note, one could also issue API requests using [Postman](https://www.postman.com/) or curl Linux command.
+
+- Postman example:
+![Postman][postman]
+
+- curl example:
+```
+curl -X 'POST' \
+  'http://localhost:8080/api/v1/reservations' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "userFullName": "John Doe",
+  "userEmail": "john.doe@upgrade.com",
+  "checkinDate": "2022-03-20",
+  "checkoutDate": "2022-03-22"
+}'
+```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+### Setting the log level via Spring actuator:
+During application execution, one can set the appropriate log level on the root logger via the exposed Spring actuator web interface:
+
+- Set log level to INFO:
+```
+curl -X 'POST' \
+  'http://localhost:8080/actuator/loggers/ROOT' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "configuredLevel": "INFO"
+}'
+```
+
+- Set log level to DEBUG:
+```
+curl -X 'POST' \
+  'http://localhost:8080/actuator/loggers/ROOT' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "configuredLevel": "DEBUG"
+}'
+```
 
 
 ## General logic and implementation
 
-<!-- TODO -->
+The application is designed using a 3 layer architecture: Controller-Service-Repository.
+
+Controller:
+
+
+
+Service:
+
+
+Repository:
+
+Data model:
+
+
+The operations in are marked with @Transactional to group read/write operations in a transaction.
+Locking mechanism is also used in 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -234,11 +638,13 @@ Project Link: [https://github.com/Snazzythat/volcanocamp](https://github.com/Sna
 [license-url]: https://github.com/Snazzythat/volcanocamp/blob/master/MIT-LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/roman-andoni-6584b493
-[product-screenshot]: ./readme-content/swagger-main.png
-[ide-screenshot]: ./readme-content/eclipse-ide.png
-[dev-run]: ./readme-content/start-with-dev.png
-[prod-run]: ./readme-content/start-with-prod.png
-[h2-login]: ./readme-content/h2-console-login.png
-[h2-console]: ./readme-content/h2-console-login.png
-[reservations-postgresql]: ./readme-content/reservations-postgres.png
-[dates-postgresql]: ./readme-content/dates-postgres.png
+[product-screenshot]: ./readme-content/swagger-main.PNG
+[ide-screenshot]: ./readme-content/eclipse-ide.PNG
+[dev-run]: ./readme-content/start-with-dev.PNG
+[prod-run]: ./readme-content/start-with-prod.PNG
+[h2-login]: ./readme-content/h2-console-login.PNG
+[h2-console]: ./readme-content/h2-web.PNG
+[reservations-postgresql]: ./readme-content/reservations-postgres.PNG
+[dates-postgresql]: ./readme-content/dates-postgres.PNG
+[tests]: ./readme-content/run-tests-via-gradle.PNG
+[postman]: ./readme-content/postman-create.PNG

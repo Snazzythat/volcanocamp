@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(OccupiedPeriodException.class)
 	protected ResponseEntity<OperationError> handleOccupiedPeriodException(OccupiedPeriodException ex) {
-		OperationError error = new OperationError(HttpStatus.BAD_REQUEST, "Occupied period error", ex.getMessage());
+		OperationError error = new OperationError(HttpStatus.CONFLICT, "Occupied period error", ex.getMessage());
 		log.error("Error occured: {}",ex.getMessage());
 		log.debug("Exception details: {}",ex);
 		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
 	
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	protected ResponseEntity<OperationError> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-		OperationError error = new OperationError(HttpStatus.BAD_REQUEST, "Occupied period error", ex.getMessage());
+		OperationError error = new OperationError(HttpStatus.CONFLICT, "Occupied period error", ex.getMessage());
 		log.error("Error occured: {}",ex.getMessage());
 		log.debug("Exception details: {}",ex);
 		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
