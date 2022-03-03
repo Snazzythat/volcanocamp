@@ -11,7 +11,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/Snazzythat/volcanocamp">
-    <img src="readme-content/volcano-logo.png" alt="Logo" width="80" height="80" style={mix-blend-mode: multiply}>
+    <img src="readme-content/volcano-logo.PNG" alt="Logo" width="80" height="80">
   </a>
 
 <h3 align="center">VolcanoCamp</h3>
@@ -584,24 +584,30 @@ curl -X 'POST' \
 ```
 
 
-## General logic and implementation
+## Implementation notes
 
-The application is designed using a 3 layer architecture: Controller-Service-Repository.
+* The application is designed using a 3 layer architecture: Controller-Service-Repository.
 
-Controller:
+* DI is done via @Autowired annotation.
 
+* Exception handling is done via @ControllerAdvice in GlobalExceptionHandler (centralized exception handlers with @ExceptionHandler annotaions)
 
+* Date field validation is done in DTO via custom annotation (@ValidReservationDates) created with @Constraint in ValidReservationDates
 
-Service:
+* Controller converts between Enity and DTO to ensure separation of business and representational data layers 
 
+* Service methods are marked with @Transactional allowing to combine operations (read/write) to and from DB as transactions.
 
-Repository:
+* @Transactional(readOnly = true) is used for available dates read and reservation read to ensure that read-only operation is performed.
 
-Data model:
+* @Transactional(isolation = Isolation.SERIALIZABLE) is used to isolate reservation creation and update to ensure complete transactional isolation on those methods. This will prevent data overwriting during high concurrent loads.
 
+* Dates Repository uses a @Lock(LockModeType.PESSIMISTIC_WRITE) lock on dates retrieval to indicate that the currently selected Dates are read
+and will be updated. This will prevent two operations updating the same row. This acts as SELECT FOR UPDATE statement in SQL.
 
-The operations in are marked with @Transactional to group read/write operations in a transaction.
-Locking mechanism is also used in 
+* ReservationConfiguration object is used with @ConfigurationProperties and injected in the Service layer to read configuration from
+application.properties file.
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
