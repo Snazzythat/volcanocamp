@@ -39,10 +39,11 @@ public class ReservationService {
 	ReservationDateRepository reservationDateRepo;
 
 	/**
+	 * Queries the database for all available reservation dates and returns a list of dates (LocalDate) available to reserve.
 	 * 
-	 * @param fromDate
-	 * @param toDate
-	 * @return
+	 * @param startDate (LocalDate) Beginning date of the availability period
+	 * @param endDate (LocalDate) Ending date of the availability period
+	 * @return (List<LocalDate>) List of available dates to reserve
 	 */
 	@Transactional(readOnly = true)
 	public synchronized List<LocalDate> getAllAvailableDates(LocalDate startDate, LocalDate endDate) {
@@ -71,9 +72,10 @@ public class ReservationService {
 	}
 
 	/**
+	 * Queries the database for a specific Reservation using the provided reservation id.
 	 * 
-	 * @param reservationId
-	 * @return
+	 * @param reservationId (String) Reservation id in UUID format
+	 * @return (Reservation) Reservation with the matching id
 	 */
 	@Transactional(readOnly = true)
 	public Reservation getReservationById(String reservationId) {
@@ -91,9 +93,10 @@ public class ReservationService {
 	}
 
 	/**
+	 * Creates and persists a new Reservation.
 	 * 
-	 * @param reservationToSave
-	 * @return
+	 * @param reservationToSave (Reservation) Reservation to save in the database
+	 * @return (Reservation) Reservation saved in the database
 	 */
 	@Transactional(isolation = Isolation.SERIALIZABLE)
 	public Reservation createNewReservation(Reservation reservationToSave) {
@@ -119,9 +122,10 @@ public class ReservationService {
 	}
 
 	/**
+	 * Updates and persists a given Reservation.
 	 * 
-	 * @param reservationToUpdate
-	 * @return
+	 * @param reservationToUpdate (Reservation) Reservation to update in the database
+	 * @return Reservation updated in the database
 	 */
 	@Transactional(isolation = Isolation.SERIALIZABLE)
 	public Reservation updateReservation(String reservationId, Reservation reservationToUpdate) {
@@ -142,8 +146,7 @@ public class ReservationService {
 		}
 
 		// Check if the new dates of the reservation do not overlap, take into account
-		// existing dates if update
-		// will include old dates as well
+		// existing dates if update will include old dates as well
 		List<ReservationDate> activeReservationDatesInPeriod = reservationDateRepo.findActiveReservationsInInterval(
 				reservationToUpdate.getCheckinDate(), reservationToUpdate.getCheckoutDate());
 		List<ReservationDate> oldReservationDates = convertLocalDateListToReservationList(
@@ -178,9 +181,10 @@ public class ReservationService {
 	}
 
 	/**
+	 * Cancels a given Reservation by updating it in the database with the active field set to false
 	 * 
-	 * @param reservationId
-	 * @return
+	 * @param reservationId (String) Reservation id in UUID format
+	 * @return Reservation with active field set to false
 	 */
 	@Transactional
 	public Reservation cancelReservation(String reservationId) {

@@ -32,6 +32,13 @@ public class ReservationDatesValidator implements ConstraintValidator<ValidReser
 
 	}
 
+	/**
+	 * Validates Reservation request dates syntactically and schematically given a Reservation request.
+	 * 
+	 * @param requestReservation (ReservationDto) Reservation request
+	 * @param constraintContext (ConstraintValidatorContext) Constraint context
+	 * @return true if both check-in and check-out dates are valid
+	 */
 	@Override
 	public boolean isValid(ReservationDto requestReservation, ConstraintValidatorContext constraintContext) {
 		

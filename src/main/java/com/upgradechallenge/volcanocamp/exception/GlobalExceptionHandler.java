@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -96,12 +97,17 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(NoHandlerFoundException.class)
 	protected ResponseEntity<OperationError> handleNoHandlerFoundException(NoHandlerFoundException ex) {
-		return buildErrorResponseEntity(HttpStatus.NOT_FOUND, "Handler not found", ex);
+		return buildErrorResponseEntity(HttpStatus.NOT_FOUND, "Handler not found for the provided API path", ex);
 	}
 
 	@ExceptionHandler(MissingPathVariableException.class)
 	public ResponseEntity<OperationError> handleMissingPathVariableException(MissingPathVariableException ex) {
-		return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, "Missing path parameter", ex);
+		return buildErrorResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, "Missing path parameter", ex);
+	}
+	
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+	public ResponseEntity<OperationError> handleHttpRequestMethodNotSupportedException(Exception ex) {
+		return buildErrorResponseEntity(HttpStatus.METHOD_NOT_ALLOWED, "This method is not supported for the provided API path", ex);
 	}
 	
 	@ExceptionHandler(Exception.class)
