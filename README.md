@@ -220,18 +220,16 @@ The format of provided dates in request body or query parameters is yyyy-MM-dd a
 <br />
 The reservation date period is considered to have all dates in the period reserved and last date as available (since due to the requirement,
 the check-out and check-in are at 00:00). Therefore, as an example, a reservation between 2022-03-03 and 2022-03-05 will have dates reserved:
-2022-03-03,2022-03-03,2022-03-04 and 2022-03-05 is available (since current reservation check-out is at 2022-03-03, 00:00 and the next available
+2022-03-03,2022-03-04 and 2022-03-05 is available (since current reservation check-out is an 2022-03-05 at 00:00 and the next available
 registration can start at the same instance).
 
 <br />
 <br />
-For in-depth API usage (including query parameters and request body fields format), examples and request responses you can access the Swagger UI running along with the application at 
-```
-http://localhost:8080/swagger-ui/index.html
-```
+For in-depth API usage (including query parameters and request body fields format), examples and request responses you can access the Swagger UI running along with the application at: http://localhost:8080/swagger-ui/index.html
+<br />
+<br />
 
 ![Swagger-UI][product-screenshot]
-
 
 ### Examples:
 
