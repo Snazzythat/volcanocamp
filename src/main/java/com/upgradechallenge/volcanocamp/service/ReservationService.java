@@ -46,7 +46,7 @@ public class ReservationService {
 	 * @return (List<LocalDate>) List of available dates to reserve
 	 */
 	@Transactional(readOnly = true)
-	public synchronized List<LocalDate> getAllAvailableDates(LocalDate startDate, LocalDate endDate) {
+	public List<LocalDate> getAllAvailableDates(LocalDate startDate, LocalDate endDate) {
 
 		if (startDate.isAfter(endDate)) {
 			throw new BadRequestException(VALIDATION_ERROR_DATE_QUERY_PARAMS);

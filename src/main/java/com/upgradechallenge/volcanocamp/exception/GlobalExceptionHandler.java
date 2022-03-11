@@ -27,26 +27,17 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(BadRequestException.class)
 	protected ResponseEntity<OperationError> handleInvalidPeriodException(BadRequestException ex) {
-		OperationError error = new OperationError(HttpStatus.BAD_REQUEST, "Bad request error", ex.getMessage());
-		log.error("Error occured: {}",ex.getMessage());
-		log.debug("Exception details: {}",ex);
-		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+		return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, "Bad request error", ex);
 	}
 
 	@ExceptionHandler(OccupiedPeriodException.class)
 	protected ResponseEntity<OperationError> handleOccupiedPeriodException(OccupiedPeriodException ex) {
-		OperationError error = new OperationError(HttpStatus.CONFLICT, "Occupied period error", ex.getMessage());
-		log.error("Error occured: {}",ex.getMessage());
-		log.debug("Exception details: {}",ex);
-		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+		return buildErrorResponseEntity(HttpStatus.CONFLICT, "Occupied period error", ex);
 	}
 	
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	protected ResponseEntity<OperationError> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
-		OperationError error = new OperationError(HttpStatus.CONFLICT, "Occupied period error", ex.getMessage());
-		log.error("Error occured: {}",ex.getMessage());
-		log.debug("Exception details: {}",ex);
-		return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+		return buildErrorResponseEntity(HttpStatus.CONFLICT, "Occupied period error", ex);
 	}
 
 	@ExceptionHandler(ResourceNotFoundException.class)
@@ -80,19 +71,12 @@ public class GlobalExceptionHandler {
 	
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
 	protected ResponseEntity<OperationError> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
-		OperationError error = new OperationError(HttpStatus.BAD_REQUEST, "Query parameter format error", ex.getMessage());
-		log.error("Error occured: {}",ex.getMessage());
-		log.debug("Exception details: {}",ex);
-		return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+		return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, "Query parameter format error", ex);
 	}
 
 	@ExceptionHandler(MethodNotAllowedException.class)
 	protected ResponseEntity<OperationError> handleMethodNotAllowedException(MethodNotAllowedException ex) {
-		OperationError error = new OperationError(HttpStatus.METHOD_NOT_ALLOWED, "Operation is not allowed",
-				ex.getMessage());
-		log.error("Error occured: {}",ex.getMessage());
-		log.debug("Exception details: {}",ex);
-		return new ResponseEntity<>(error, HttpStatus.METHOD_NOT_ALLOWED);
+		return buildErrorResponseEntity(HttpStatus.METHOD_NOT_ALLOWED, "Operation is not allowed", ex);
 	}
 
 	@ExceptionHandler(NoHandlerFoundException.class)

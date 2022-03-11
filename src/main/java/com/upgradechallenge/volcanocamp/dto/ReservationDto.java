@@ -5,6 +5,7 @@ import java.util.UUID;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.upgradechallenge.volcanocamp.utils.ValidReservationDates;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 @ValidReservationDates
 @Schema
 public class ReservationDto {

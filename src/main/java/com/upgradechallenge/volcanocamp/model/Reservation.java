@@ -1,6 +1,5 @@
 package com.upgradechallenge.volcanocamp.model;
 
-import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -26,16 +25,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(of = { "id" })
-public class Reservation implements Serializable {
-
-	private static final long serialVersionUID = 1L;
+public class Reservation {
 
 	@Id
 	@GeneratedValue(generator = "UUID")
 	@GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
 	@Column(name = "id", updatable = false, nullable = false)
 	private UUID id;
-	
+
 	@Version
 	@Column(name = "version", nullable = false)
 	private Long version;
