@@ -20,4 +20,7 @@ public interface ReservationDateRepository extends JpaRepository<ReservationDate
 	@Query("select rd from ReservationDate rd where rd.date >= ?1 and rd.date < ?2")
 	List<ReservationDate> findActiveReservationsInInterval(LocalDate fromDate, LocalDate toDate);
 	
+	@Query("select rd from ReservationDate rd where rd.date >= ?1 and rd.date < ?2")
+	List<ReservationDate> findActiveReservationsInIntervalNonLocked(LocalDate fromDate, LocalDate toDate);
+	
 }

@@ -48,7 +48,7 @@ public class ReservationServiceTest {
 		LocalDate startDate = LocalDate.now().plusDays(1);
 		LocalDate endDate = LocalDate.now().plusDays(3);
 
-		when(reservationDateRepoMock.findActiveReservationsInInterval(startDate, endDate))
+		when(reservationDateRepoMock.findActiveReservationsInIntervalNonLocked(startDate, endDate))
 				.thenReturn(new ArrayList<>());
 
 		List<LocalDate> availableDates = reservationService.getAllAvailableDates(startDate, endDate);
@@ -63,7 +63,7 @@ public class ReservationServiceTest {
 
 		List<ReservationDate> mockResDates = getReservationDateListFromRange(startDate, endDate);
 
-		when(reservationDateRepoMock.findActiveReservationsInInterval(startDate, endDate)).thenReturn(mockResDates);
+		when(reservationDateRepoMock.findActiveReservationsInIntervalNonLocked(startDate, endDate)).thenReturn(mockResDates);
 
 		List<LocalDate> availableDates = reservationService.getAllAvailableDates(startDate, endDate);
 
@@ -83,7 +83,7 @@ public class ReservationServiceTest {
 		LocalDate endDateRes2 = LocalDate.now().plusDays(8);
 		mockResDates.addAll(getReservationDateListFromRange(startDateRes2, endDateRes2));
 
-		when(reservationDateRepoMock.findActiveReservationsInInterval(startDate, endDate))
+		when(reservationDateRepoMock.findActiveReservationsInIntervalNonLocked(startDate, endDate))
 				.thenReturn(mockResDates);
 
 		List<LocalDate> availableDates = reservationService.getAllAvailableDates(startDate, endDate);

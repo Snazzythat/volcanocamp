@@ -55,7 +55,7 @@ public class ReservationService {
 		// Add offset to endDate to include it in availability list
 		List<LocalDate> potentialAvailableDates = extractDatesBetweenTwoDates(startDate, endDate.plusDays(1));
 		List<ReservationDate> activeReservationDatesInPeriod = reservationDateRepo
-				.findActiveReservationsInInterval(startDate, endDate);
+				.findActiveReservationsInIntervalNonLocked(startDate, endDate);
 
 		if (activeReservationDatesInPeriod.size() == 0) {
 			log.debug("No overlapping dates found in period from {} to {}", startDate, endDate);
